@@ -1,5 +1,5 @@
-import json 
-import os 
+import os
+import json
 import time 
 
 
@@ -9,7 +9,8 @@ def process_answer(full_answer):
     return public_answer, plan 
 
 
-def save_conversation(history, agent_name,full_answer, prompt,round_assign=[],initial=False):
+def save_conversation(history, agent_name, full_answer, prompt,round_assign=[], initial=False):
+
     if initial: 
         history['content']['slot_assignment'] = round_assign
         history['content']["rounds"] = []
@@ -19,17 +20,16 @@ def save_conversation(history, agent_name,full_answer, prompt,round_assign=[],in
         history['content']["finished_rounds"] += 1
     
     public_answer, plan  = process_answer(full_answer)
+    history['content']["rounds"].append({'agent': agent_name, 'prompt': prompt, 'full_answer': full_answer, 'public_answer': public_answer})
 
-    history['content']["rounds"].append({'agent':agent_name, 'prompt': prompt, 'full_answer': full_answer, 'public_answer': public_answer})
-
-    if plan:        
+    if plan:
         if agent_name in history['content']['plan'].keys():
             history['content']['plan'][agent_name].append(plan)
         else:
             history['content']['plan'][agent_name] = [plan]
     
     write_file(history['content'],history['file'])
-    return history      
+    return history
     
 
 def extract_answer(answer):
@@ -40,23 +40,25 @@ def extract_answer(answer):
         answer = answer.split('<ANSWER>')[-1]
     return answer
     
+
 def extract_plan(answer):
-    #extract plan 
-    if "<PLAN>" and "</PLAN>" in answer: 
+    #extract plan
+    if "<PLAN>" and "</PLAN>" in answer:
         plan = answer.split('<PLAN>')[-1].split("</PLAN>")[0]
         return plan
-    elif "<PLAN>" in answer: 
+    elif "<PLAN>" in answer:
         plan = answer.split('<PLAN>')[-1]
-        return plan 
+        return plan
     return ''
 
 
-def write_file(log_dict,output_file):
+def write_file(log_dict, output_file):
     with open(output_file, "w") as outfile:
         json.dump(log_dict, outfile)
     return 
 
-def create_outfiles(args,OUTPUT_DIR):
+
+def create_outfiles(args, OUTPUT_DIR):
     '''
     create output dirs of experiment if it does not exit 
     if restart:
@@ -69,9 +71,9 @@ def create_outfiles(args,OUTPUT_DIR):
     
     history ={}
 
-    
     if not os.path.isdir(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
+
     if args.restart:
         history['file'] = os.path.join(OUTPUT_DIR, args.output_file)
         
@@ -89,11 +91,4 @@ def create_outfiles(args,OUTPUT_DIR):
         history = {'file': output_file, 'content': {}}
         round_assign = []
         
-
-    return round_assign, round_start, history 
-    
-
-
-
-    
-    
+    return round_assign, round_start, history

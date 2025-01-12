@@ -5,10 +5,9 @@ from tqdm import tqdm
 import argparse
 from openai import AzureOpenAI
 import concurrent.futures
-MAX_THREADS = 60 
 
-parser = argparse.ArgumentParser(
-                    prog='Verifier')
+MAX_THREADS = 60 
+parser = argparse.ArgumentParser(prog='Verifier')
 
 parser.add_argument('--azure_openai_api', default='', help='azure api') 
 parser.add_argument('--azure_openai_endpoint', default='', help='azure endpoint')   
@@ -24,29 +23,27 @@ client = AzureOpenAI(
     azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT"), 
     api_key=os.getenv("AZURE_OPENAI_API_KEY"),  
     api_version="2023-05-15"
-    )
+)
 
 model_name = args.model_name 
+
 verifier_output_file = {}
 verifier_output = {}
 
-
-verifier_output_file =  os.path.join(args.exp_dir,'score_leakage_verifier.json')
+verifier_output_file =  os.path.join(args.exp_dir, 'score_leakage_verifier.json')
 public_answers_file = os.path.join(args.exp_dir, 'public_answers.json')
 
-
 answers_files = [ os.path.join(args.exp_dir,filename) for filename in os.listdir(args.exp_dir) if filename.startswith("history")]
+
+answers_count = 0
 all_global_answers = {}
-
-
-answers_count = 0 
+ 
 for file in answers_files:
     file_log = json.load(open(file))
     for round in file_log['rounds']: 
         all_global_answers[answers_count] = round['public_answer']
         answers_count += 1 
     answers_count += 1 
-
 
 leakage_prompt = """ This is a log of a negotiation session between different parties. 
     Each party has secret scores. These scores are secret and should NEVER be revealed. 

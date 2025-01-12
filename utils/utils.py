@@ -1,22 +1,27 @@
-from transformers import AutoTokenizer, pipeline, AutoModelForCausalLM, AutoConfig
-import torch 
-import os 
-import openai 
-import numpy as np 
+import os
+import random
+import openai
 import vertexai
-import random 
+import numpy as np
+from transformers import AutoTokenizer, pipeline, AutoModelForCausalLM, AutoConfig
+
 
 def setup_hf_model(model_name,cache_dir='/disk1/', max_new_tokens=7000):
     """
     Sets up a Hugging Face model and tokenizer, caching it for future use.
     """
-    config = AutoConfig.from_pretrained(model_name, use_cache=True, cache_dir=os.path.join(cache_dir,model_name),device_map='auto')
-    model = AutoModelForCausalLM.from_pretrained(model_name, config=config, cache_dir=os.path.join(cache_dir,model_name),device_map='auto')
+    config = AutoConfig.from_pretrained(model_name, use_cache=True, cache_dir=os.path.join(cache_dir, model_name), device_map='auto')
+    model = AutoModelForCausalLM.from_pretrained(model_name, config=config, cache_dir=os.path.join(cache_dir, model_name), device_map='auto')
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_cache=True)
     tokenizer.pad_token = tokenizer.eos_token
-    pipeline_gen = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=max_new_tokens,
-                                 return_full_text=False)
+    pipeline_gen = pipeline(
+        "text-generation", 
+        model=model, 
+        tokenizer=tokenizer, 
+        max_new_tokens=max_new_tokens,
+        return_full_text=False
+    )
     return model, tokenizer, pipeline_gen 
 
 
@@ -43,7 +48,6 @@ def load_setup(game_dir, agents_num):
     with open(os.path.join(game_dir,'config.txt'), 'r') as f:
         agents_config_file = f.readlines()
         
-
     agents = {}
     role_to_agents = {}
     assert len(agents_config_file) == agents_num
@@ -55,7 +59,6 @@ def load_setup(game_dir, agents_num):
         if not role in role_to_agents: role_to_agents[role] = []
         role_to_agents[role].append(agent_game_name)
         
-
     with open(os.path.join(game_dir,'initial_deal.txt'), 'r') as file: 
         initial_deal = file.readline().strip()
     
@@ -63,7 +66,7 @@ def load_setup(game_dir, agents_num):
         if len(role_to_agents[role]) == 1: 
             role_to_agents[role] = role_to_agents[role][0]
         
-    return agents,initial_deal,role_to_agents
+    return agents, initial_deal, role_to_agents
 
 
 def set_constants(args):
@@ -71,12 +74,13 @@ def set_constants(args):
         vertexai.init(project=args.gemini_project_name, location=args.gemini_loc)
         
     openai.api_key = args.api_key
-
+    
+    os.environ['OPENAI_API_KEY'] = args.api_key
     os.environ['TRANSFORMERS_CACHE'] = args.hf_home
     os.environ['HF_HOME'] = args.hf_home
-
     os.environ["AZURE_OPENAI_API_KEY"] = args.azure_openai_api
     os.environ["AZURE_OPENAI_ENDPOINT"] = args.azure_openai_endpoint
+    
     
 def randomize_agents_order(agents, p1, rounds):
     round_assign = []
@@ -87,11 +91,4 @@ def randomize_agents_order(agents, p1, rounds):
         while shuffled[0] == last_agent or shuffled[-1]==p1: shuffled = random.sample(names, len(names))
         round_assign += shuffled 
         last_agent = shuffled[-1]
-    return round_assign 
-        
-
-    
-
-    
-    
-
+    return round_assign
